@@ -1,0 +1,1 @@
+# linebot-imagemap-util
