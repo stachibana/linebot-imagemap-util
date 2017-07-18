@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>LINE Messaging API Imagemap Message Generator(Unofficial)</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+  <script src="https://code.createjs.com/easeljs-0.8.2.min.js"></script>
+
+  <link rel="stylesheet" href="./styles/agate.css">
+  <script src="./highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <script src="http://use.edgefonts.net/source-code-pro.js"></script>
+  <script>
+
+    hljs.initHighlightingOnLoad();
+
+    window.addEventListener("load", init);
+
+    stage = new createjs.Stage("stage");
+
+    beginX = 0;
+    beginY = 0;
+
+    rectCount = 0;
+
+    imageWidth = 400;
+    imageHeight = 400;
+    imageScaleRatio = 1040 / imageWidth;
+
+    areaSizeArray = new Array(5);
+
+    function init() {
+
+
+      stage = new createjs.Stage("stage");
+
+      $("#container").width(400);
+      $("#container").height(400);
+
+      canvas = document.getElementById("stage");
+      canvas.width = 400;
+      canvas.height = 400;
+
+      stage.update();
+
+      replaceCode();
+
+      $('#resetBtn').click(function(){
+        rectCount = 0;
+         stage.removeAllChildren();
+         stage.update();
+
+         for(var i = 0; i < 5; i++) {
+           $("#action0" + (i + 1) + " :input").attr("disabled", true);
+         }
+
+         replaceCode();
+      });
+      stage.update();
+
+      tmp = new createjs.Shape();
+      isDragging = false;
+
+      stage.addEventListener("stagemousedown", function(event) {
+        beginX = event.stageX;
+        beginY = event.stageY;
+
+        if(rectCount >= 5) {
+          alert("This example allows only 5 or less rects.");
+          return;
+        }
+
+        isDragging = true;
+      })
+      stage.addEventListener("stagemousemove", function(event) {
+        if(!isDragging) return;
+        if(tmp) stage.removeChild(tmp);
+        w = event.stageX - beginX;
+        h = event.stageY - beginY;
+        tmp = new createjs.Shape();
+        tmp.graphics.beginStroke("#000");
+        tmp.graphics.setStrokeStyle(1);
+        tmp.snapToPixel = true;
+        tmp.graphics.drawRect(beginX, beginY, w,h);
+        stage.addChild(tmp);
+        stage.update();
+      })
+      stage.addEventListener("stagemouseup", function(evevt) {
+
+        if(rectCount >= 5) {
+          return;
+        }
+
+        isDragging = false;
+        stage.removeChild(tmp);
+        stage.update();
+
+        $("p#mousex").text("" + beginX + "," + beginY);
+        $("p#mousey").text(evevt.stageX + "," + evevt.stageY);
+        w = evevt.stageX - beginX;
+        h = evevt.stageY - beginY;
+        if(Math.abs(w) > 10 && Math.abs(h) > 10) {
+          var x, y = 0;
+          if(beginX > evevt.stageX) {
+            x = evevt.stageX;
+          } else {
+            x = beginX;
+          }
+          if(beginY > evevt.stageY) {
+            y = evevt.stageY;
+          } else {
+            y = beginY;
+          }
+          drawClickableRect(x, y, Math.abs(w), Math.abs(h));
+
+          replaceCode();
+        }
+      })
+
+			createjs.Touch.enable(stage);
+
+			stage.mouseMoveOutside = true;
+
+			stage.update();
+
+      $('#file').change(
+          function() {
+
+              for(var i = 0; i < 5; i++) {
+                $("#action0" + (i + 1) + " :input").attr("disabled", true);
+              }
+
+              if ( !this.files.length ) {
+                  return;
+              }
+              var file = $(this).prop('files')[0];
+              var fr = new FileReader();
+
+              fr.onload = function(event) {
+                  var i = new Image();
+                  i.onload = function(){
+
+                    $("#container").width(i.width);
+                    $("#container").height(i.height);
+
+                    imageWidth = i.width;
+                    imageHeight = i.height;
+                    imageScaleRatio = 1040 / imageWidth;
+
+                    canvas = document.getElementById("stage");
+                    canvas.width = i.width;
+                    canvas.height = i.height;
+
+                    $('#stage').css({
+                      backgroundImage: 'url("' + fr.result + '")'
+                    });
+
+                  };
+                  i.src = fr.result;
+
+                  replaceCode();
+              }
+              fr.readAsDataURL(file);
+          }
+      );
+
+      for(var i = 0; i < 5; i++) {
+        $("#action0" + (i + 1) + " :input").attr("disabled", true);
+      }
+
+      $('input,select :not(#language)').on('change',function(){
+        str = "";
+        for(var i = 0; i < rectCount; i++) {
+          str += $("#action0" + (i + 1) + " > select").val() + ":";
+          str += $("#action0" + (i + 1) + " > input").val() + "\n";
+        }
+        replaceCode();
+      });
+
+      $('select:not(#language)').on('change',function(){
+        replaceCode();
+      });
+
+      $('#language').on('change',function(){
+        replaceCode();
+      });
+		}
+
+    function drawClickableRect(x, y, w, h) {
+      rectCount ++;
+
+      $("#action0" + rectCount + " :input").attr("disabled", false);
+
+      areaSizeArray[rectCount - 1] = [x, y, w, h];
+
+      var border = new createjs.Shape();
+      border.graphics.beginFill(getRandomColor());
+      border.graphics.setStrokeStyle(1);
+      border.snapToPixel = true;
+      border.graphics.drawRect(0, 0, w, h);
+      border.alpha = 0.5;
+
+      var label = new createjs.Text(rectCount, "bold 14px Arial", "#ffffff");
+      label.textAlign = "center";
+      label.x = w / 2 - 7;
+      label.y = h / 2 - 7;
+
+      var container = new createjs.Container();
+      container.x = x;
+      container.y = y;
+      container.addChild(border, label);
+      stage.addChild(container);
+
+      stage.update();
+    }
+
+    function getRandomColor() {
+      var letters = '0123456789ABCDEF';
+      var color = '#';
+      for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    function select_contents(obj) {
+
+      var s = window.getSelection();
+      var range = document.createRange();
+      range.selectNodeContents(obj);
+      s.removeAllRanges();
+      s.addRange(range);
+    }
+
+    function replaceCode() {
+      $('#code').removeClass();
+      if($('#language').val() == 'php') {
+        var actions = '';
+        for(var i = 0; i < rectCount; i++) {
+          actions += ("array_push($actionArray, new LINE&#x5c;LINEBot&#x5c;ImagemapActionBuilder&#x5c;{5}(" +
+              "\n              '{4}'," +
+              "\n              new LINE&#x5c;LINEBot&#x5c;ImagemapActionBuilder&#x5c;AreaBuilder({0}, {1}, {2}, {3})));\n        ")
+              .format(Math.floor(areaSizeArray[i][0] * imageScaleRatio),
+                 Math.floor(areaSizeArray[i][1] * imageScaleRatio),
+                 Math.floor(areaSizeArray[i][2] * imageScaleRatio),
+                 Math.floor(areaSizeArray[i][3] * imageScaleRatio),
+                 $("#action0" + (i + 1) + " > input").val(),
+                 ($("#action0" + (i + 1) + " > select").val() == "message") ? "ImagemapMessageActionBuilder" : "ImagemapUriActionBuilder"
+               );
+        }
+        var code = code_php
+        .replace('![imageBaseHeight]', Math.floor(imageHeight * imageScaleRatio))
+        .replace('![actions]', actions);
+        $('#code').html(code);
+        $('#code').addClass('php');
+      } else if($('#language').val() == 'python') {
+        var actions = '';
+        for(var i = 0; i < rectCount; i++) {
+          actions += ("actions.append({5}(" +
+                "\n                  {6} = '{4}'," +
+                "\n                  area = ImagemapArea(" +
+                "\n                      x = {0}, y = {1}, width = {2}, height = {3}" +
+                "\n                  )" +
+                "\n            ))\n            ")
+              .format(Math.floor(areaSizeArray[i][0] * imageScaleRatio),
+                 Math.floor(areaSizeArray[i][1] * imageScaleRatio),
+                 Math.floor(areaSizeArray[i][2] * imageScaleRatio),
+                 Math.floor(areaSizeArray[i][3] * imageScaleRatio),
+                 $("#action0" + (i + 1) + " > input").val(),
+                 ($("#action0" + (i + 1) + " > select").val() == "message") ? "MessageImagemapAction" : "URIImagemapAction",
+                 ($("#action0" + (i + 1) + " > select").val() == "message") ? "text" : "link_uri"
+               );
+        }
+        var code = code_python
+        .replace('![imageBaseHeight]', Math.floor(imageHeight * imageScaleRatio))
+        .replace('![actions]', actions);
+        $('#code').html(code);
+        $('#code').addClass('python');
+      } else if($('#language').val() == 'ruby') {
+        var actions = '';
+        for(var i = 0; i < rectCount; i++) {
+          actions += ("actions.push({" +
+                  "\n          type: '{5}'," +
+                  "\n          {6}: '{4}'," +
+                  "\n          area: {" +
+                  "\n            x: {0}," +
+                  "\n            y: {1}," +
+                  "\n            width: {2}," +
+                  "\n            height: {3}," +
+                  "\n          }," +
+                  "\n        }) \n        ")
+              .format(Math.floor(areaSizeArray[i][0] * imageScaleRatio),
+                 Math.floor(areaSizeArray[i][1] * imageScaleRatio),
+                 Math.floor(areaSizeArray[i][2] * imageScaleRatio),
+                 Math.floor(areaSizeArray[i][3] * imageScaleRatio),
+                 $("#action0" + (i + 1) + " > input").val(),
+                 ($("#action0" + (i + 1) + " > select").val() == "message") ? "message" : "uri",
+                 ($("#action0" + (i + 1) + " > select").val() == "message") ? "text" : "linkUri"
+               );
+        }
+        var code = code_ruby
+        .replace('![imageBaseHeight]', Math.floor(imageHeight * imageScaleRatio))
+        .replace('![actions]', actions);
+        $('#code').html(code);
+        $('#code').addClass('ruby');
+      }
+
+      hljs.initHighlighting.called = false;
+      hljs.initHighlighting();
+    }
+    String.prototype.format = function () {
+            var args = [].slice.call(arguments);
+            return this.replace(/(\{\d+\})/g, function (a){
+                return args[+(a.substr(1,a.length-2))||0];
+            });
+    };
+  </script>
+</head>
+<body>
+  <table style="margin:0 auto">
+    <tr>
+      <td colspan="2">
+        <h1><span class="line">LINE</span> Messaging API Imagemap Message Generator(Unofficial)</h1>
+      </td>
+    </tr>
+    <tr>
+
+    <td id="container"  valign="top" align="center">
+
+      <canvas id="stage" width="100%" height="100%" style="background-image:url(./sample.png)" ></canvas>
+
+
+      <input type="file" id="file" style="display:none;">
+      <label for="file" class="file">
+        <img src="upload@2x.png" height="39" id="file" style="cursor:pointer;" />
+        <input type="file" style="display:none;"/>
+      </label>
+
+      <br />
+      <button id="resetBtn">Reset</button>
+    </td>
+    <td width="600px">
+
+      <div id="action01">
+        <p>Action 1</p>
+        <select>
+          <option value="message">Message</option>
+          <option value="uri">URI</option>
+        </select>
+        <input type="text" value="" style="width:400px;" />
+        <br />
+      </div>
+      <div id="action02">
+        <p>Action 2</p>
+        <select>
+          <option value="message">Message</option>
+          <option value="uri">URI</option>
+        </select>
+        <input type="text" value="" style="width:400px;" />
+        <br />
+      </div>
+      <div id="action03">
+        <p>Action 3</p>
+        <select>
+          <option value="message">Message</option>
+          <option value="uri">URI</option>
+        </select>
+        <input type="text" value="" style="width:400px;" />
+        <br />
+      </div>
+      <div id="action04">
+        <p>Action 4</p>
+        <select>
+          <option value="message">Message</option>
+          <option value="uri">URI</option>
+        </select>
+        <input type="text" value="" style="width:400px;" />
+        <br />
+      </div>
+      <div id="action05">
+        <p>Action 5</p>
+        <select>
+          <option value="message">Message</option>
+          <option value="uri">URI</option>
+        </select>
+        <input type="text" value="" style="width:400px;" />
+        <br />
+      </div>
+
+      <br />
+      <p>Language?</p>
+      <select id="language">
+        <option value="php">PHP</option>
+        <option value="ruby">Ruby</option>
+        <option value="python">Python</option>
+      </select>
+
+
+<p>Script</p>
+      <pre onclick="select_contents(this);"><code id="code" class="php"></code></pre>
+
+<!--<p><a href="#">Github</a></p>-->
+    </td>
+  </tr>
+</table>
+
+
+</body>
+</html>
+<script>
+var code_php = (function(param) {return param[0].replace(/\r/g, "");})`&lt;?php
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+$app = new Silex&#x5c;Application();
+$app['debug'] = true;
+$app->post('/', function (Symfony&#x5c;Component&#x5c;HttpFoundation&#x5c;Request $request) use ($app) {
+
+  $httpClient = new &#x5c;LINE&#x5c;LINEBot&#x5c;HTTPClient&#x5c;CurlHTTPClient(getenv('CHANNEL_ACCESS_TOKEN'));
+  $bot = new &#x5c;LINE&#x5c;LINEBot($httpClient, ['channelSecret' => getenv('CHANNEL_SECRET')]);
+
+  $signature = $request->headers->get(&#x5c;LINE&#x5c;LINEBot&#x5c;Constant&#x5c;HTTPHeader::LINE_SIGNATURE);
+  if (empty($signature)) {
+      return new Symfony&#x5c;Component&#x5c;HttpFoundation&#x5c;Response('Bad Request', 400);
+  }
+  try {
+      $events = $bot->parseEventRequest(file_get_contents('php://input'), $signature);
+  } catch (InvalidSignatureException $e) {
+      return new Symfony&#x5c;Component&#x5c;HttpFoundation&#x5c;Response('Invalid signature', 400);
+  } catch (InvalidEventRequestException $e) {
+      return new Symfony&#x5c;Component&#x5c;HttpFoundation&#x5c;Response('Invalid event request', 400);
+  }
+  foreach ($events as $event) {
+    if ($event instanceof &#x5c;LINE&#x5c;LINEBot&#x5c;Event&#x5c;MessageEvent) {
+      if ($event instanceof &#x5c;LINE&#x5c;LINEBot&#x5c;Event&#x5c;MessageEvent&#x5c;TextMessage) {
+        ![actions]
+
+        $imagemapMessageBuilder = new &#x5c;LINE&#x5c;LINEBot&#x5c;MessageBuilder&#x5c;ImagemapMessageBuilder (
+          'https://' . $_SERVER['HTTP_HOST'] . '/imagemap/' . uniqid(),
+          "代替テキスト",
+          new LINE&#x5c;LINEBot&#x5c;MessageBuilder&#x5c;Imagemap&#x5c;BaseSizeBuilder(1040, ![imageBaseHeight]),
+          $actionArray
+        );
+
+        $response = $bot->replyMessage($event->getReplyToken(), $imagemapMessageBuilder);
+        if(!$response->isSucceeded()) {
+          error_log('Failed!'. $response->getHTTPStatus . ' ' . $response->getRawBody());
+        }
+      }
+    }
+  }
+  return new Symfony&#x5c;Component&#x5c;HttpFoundation&#x5c;Response('OK', 200);
+});
+
+$app->get('/imagemap/{uniqid}/{size}', function (Symfony&#x5c;Component&#x5c;HttpFoundation&#x5c;Request $request, $uniqid, $size) use ($app) {
+  $originalImage = imagecreatefrompng('imagemap.png');
+
+  list($width, $height) = getimagesize("imagemap.png");
+  $out = imagecreatetruecolor($size ,$size);
+  imagecopyresampled($out, $originalImage, 0, 0, 0, 0, $size, $size, $width, $height);
+
+  ob_start();
+  imagepng($out, null, 9);
+  $content = ob_get_contents();
+  ob_end_clean();
+
+  $response = new Symfony&#x5c;Component&#x5c;HttpFoundation&#x5c;Response($content, 200);
+  $response->headers->set('Content-Type', 'image/png');
+  $response->headers->set('Content-Disposition', 'inline');
+  return $response;
+});
+
+$app->run();
+
+
+ ?>`;
+var code_ruby = (function(param) {return param[0].replace(/\r/g, "");})`require 'sinatra'
+require 'line/bot'
+require 'json'
+require 'socket'
+require 'mini_magick'
+
+def client
+  @client ||= Line::Bot::Client.new { |config|
+    config.channel_secret = ENV['CHANNEL_SECRET']
+    config.channel_token = ENV['CHANNEL_ACCESS_TOKEN']
+  }
+end
+
+post '/' do
+  body = request.body.read
+
+  signature = request.env['HTTP_X_LINE_SIGNATURE']
+  unless client.validate_signature(body, signature)
+    error 400 do 'Bad Request' end
+  end
+
+  events = client.parse_events_from(body)
+  events.each { |event|
+    if event['type'] == 'message' then
+      if event['message']['type'] == 'text' then
+        puts 'hello log'
+        actions = Array.new()
+        ![actions]
+        message = {
+          type: 'imagemap',
+          baseUrl: 'https://' + request.host + '/imagemap/' + rand(10000).to_s,
+          altText: '代替テキスト',
+          baseSize: {
+            width: 1040,
+            height: ![imageBaseHeight],
+          },
+          actions: actions
+        }
+        response = client.reply_message(event['replyToken'], message)
+        puts response
+        puts response.body
+      end
+    end
+  }
+  "OK"
+end
+
+get '/imagemap/:uniqid/:size' do |uniqid, size|
+
+  image = MiniMagick::Image.open("./imagemap.png")
+  image.resize size + "x" + size
+  content_type :png
+  send_file(image.path, :disposition => "inline")
+
+end
+`;
+var code_python = (function(param) {return param[0].replace(/\r/g, "");})`# -*- coding: utf-8 -*-
+import sys
+sys.path.append('./vendor')
+
+import os
+import random
+
+from PIL import Image
+import io
+
+from flask import Flask, request, abort, send_file
+
+from linebot import (
+    LineBotApi, WebhookHandler,
+)
+from linebot.exceptions import (
+    InvalidSignatureError
+)
+from linebot.models import (
+    MessageEvent, TextMessage, TextSendMessage, StickerSendMessage, MessageImagemapAction, ImagemapArea, ImagemapSendMessage, BaseSize
+)
+
+app = Flask(__name__)
+
+line_bot_api = LineBotApi(os.environ.get('CHANNEL_ACCESS_TOKEN'))
+handler = WebhookHandler(os.environ.get('CHANNEL_SECRET'))
+
+
+@app.route("/", methods=['POST'])
+def callback():
+    # get X-Line-Signature header value
+    signature = request.headers['X-Line-Signature']
+
+    # get request body as text
+    body = request.get_data(as_text=True)
+    app.logger.info("Request body: " + body)
+
+    # handle webhook body
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
+
+    return 'OK'
+
+
+@handler.add(MessageEvent, message=TextMessage)
+def handle_message(event):
+    if event.type == "message":
+        if event.message.type == "text":
+            actions = []
+            ![actions]
+            message = ImagemapSendMessage(
+                base_url = 'https://' + request.host + '/imagemap/' + str(random.randint(1, 10000)),
+                alt_text = '代替テキスト',
+                base_size = BaseSize(height=![imageBaseHeight], width=1040),
+                actions = actions
+            )
+            line_bot_api.reply_message(event.reply_token, message)
+
+@app.route("/imagemap/<uniqid>/<size>", methods=['GET'])
+def imagemap(uniqid, size):
+    img = Image.open("./imagemap.png")
+    img_resize = img.resize((int(size), int(size)))
+    img_io = io.BytesIO()
+    img_resize.save(img_io, 'PNG')
+    img_io.seek(0)
+    return send_file(img_io, mimetype='image/png')
+
+if __name__ == "__main__":
+    app.debug = True
+    app.run()
+`;
+
+</script>

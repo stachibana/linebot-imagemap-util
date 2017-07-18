@@ -1,0 +1,44 @@
+
+#stage {
+  border : 1px solid #000;
+}
+
+#container {
+  #background-color:#ff3300;
+}
+
+/*.hljs {*/
+* {
+  font-size: 11pt;
+  font-family: source-code-pro, sans-serif;
+  margin:3px;
+}
+
+pre {
+  margin-top: 0px;
+}
+p {
+  margin-bottom: 0px;
+  margin-top: 0px;
+}
+
+pre code {
+  width: 600px;
+  height: 400px;
+  overflow:auto;
+}
+
+td, th {
+padding: 5px 10px;
+}
+
+h1 {
+  font-size:18pt;
+  margin-bottom: 20px;
+  color: #444;
+}
+
+h1 span.line {
+  font-size:18pt;
+  color: #64E91F;
+}
