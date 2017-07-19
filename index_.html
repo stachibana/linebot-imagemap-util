@@ -438,7 +438,7 @@ $app->post('/', function (Symfony&#x5c;Component&#x5c;HttpFoundation&#x5c;Reques
         ![actions]
 
         $imagemapMessageBuilder = new &#x5c;LINE&#x5c;LINEBot&#x5c;MessageBuilder&#x5c;ImagemapMessageBuilder (
-          'https://' . $_SERVER['HTTP_HOST'] . '/imagemap/' . uniqid(),
+          'https://' . $_SERVER['HTTP_HOST'] . '/imagemap/' . uniqid(), // prevent cache
           "代替テキスト",
           new LINE&#x5c;LINEBot&#x5c;MessageBuilder&#x5c;Imagemap&#x5c;BaseSizeBuilder(1040, ![imageBaseHeight]),
           $actionArray
@@ -478,8 +478,6 @@ $app->run();
  ?>`;
 var code_ruby = (function(param) {return param[0].replace(/\r/g, "");})`require 'sinatra'
 require 'line/bot'
-require 'json'
-require 'socket'
 require 'mini_magick'
 
 def client
@@ -506,7 +504,7 @@ post '/' do
         ![actions]
         message = {
           type: 'imagemap',
-          baseUrl: 'https://' + request.host + '/imagemap/' + rand(10000).to_s,
+          baseUrl: 'https://' + request.host + '/imagemap/' + SecureRandom.uuid, # prevent cache
           altText: '代替テキスト',
           baseSize: {
             width: 1040,
@@ -537,7 +535,7 @@ import sys
 sys.path.append('./vendor')
 
 import os
-import random
+import uuid
 
 from PIL import Image
 import io
@@ -551,7 +549,7 @@ from linebot.exceptions import (
     InvalidSignatureError
 )
 from linebot.models import (
-    MessageEvent, TextMessage, TextSendMessage, StickerSendMessage, MessageImagemapAction, ImagemapArea, ImagemapSendMessage, BaseSize
+    MessageEvent, TextMessage, MessageImagemapAction, ImagemapArea, ImagemapSendMessage, BaseSize
 )
 
 app = Flask(__name__)
@@ -585,7 +583,7 @@ def handle_message(event):
             actions = []
             ![actions]
             message = ImagemapSendMessage(
-                base_url = 'https://' + request.host + '/imagemap/' + str(random.randint(1, 10000)),
+                base_url = 'https://' + request.host + '/imagemap/' + uuid.uuid4().hex, # prevent cache
                 alt_text = '代替テキスト',
                 base_size = BaseSize(height=![imageBaseHeight], width=1040),
                 actions = actions
